@@ -26,8 +26,8 @@ PORT = '/dev/ttyUSB0'
 
 CSVFILE = 'inverter.csv'
 
-NUM_OF_SECS_TO_RUN = 60*60
-WRITE_AT_SECS = 60*10
+NUM_OF_SECS_TO_RUN = 5
+WRITE_AT_SECS = 5
 
 
 def get_lock(process_name):
@@ -37,9 +37,9 @@ def get_lock(process_name):
 
     try:
         get_lock._lock_socket.bind('\0' + process_name)
-	logging.info("I got the lock.")
+        logging.info("I got the lock.")
     except socket.error:
-	logging.warning("Lock already exists, exciting script.")
+        logging.warning("Lock already exists, exiting script.")
         sys.exit()
 
 
@@ -52,7 +52,7 @@ class Readings:
         self.readings.append(reading)
 
     def append_to_csv(self):
-        logger.info('Writing %i readings to file.' % WRITE_AT_SECS)
+        logging.info('Writing %i readings to file.' % WRITE_AT_SECS)
         time1 = time.time()
         with open(CSVFILE, 'a', encoding='utf-8') as f:
             writer = csv.writer(f)
@@ -99,4 +99,4 @@ if __name__ == '__main__':
         logging.error(e)
     finally:
 	# No need to release the lock, it it automatically closed in garbage collection.
-        logging.info('Exciting script.')
+        logging.info('Exiting script.')
