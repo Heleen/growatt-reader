@@ -10,6 +10,7 @@ import logging
 import time
 
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.exceptions import ConnectionException
 
 
 logging.basicConfig(
@@ -24,11 +25,13 @@ PORT = '/dev/ttyUSB0'
 
 CSVFILE = 'inverter.csv'
 
-NUM_OF_SECS_TO_RUN = 5
-WRITE_AT_SECS = 5
+NUM_OF_SECS_TO_RUN = 60
+WRITE_AT_SECS = 60
 
 
 class Readings:
+    """Singleton class to hold readings in memory and periodically save them to file.
+    """
     readings = []
 
     def add_reading(self, reading):
@@ -46,8 +49,8 @@ class Readings:
 
 def read_inverter(inverter):
     readings = Readings()
-    i = 0
 
+    i = 0
     while i != NUM_OF_SECS_TO_RUN+1:
         i += 1
         rr = inverter.read_input_registers(0, 45)
@@ -55,22 +58,26 @@ def read_inverter(inverter):
         timestamp = time.time()
         copy_registers.append(round(time.time()*1000.0))  # Add a unix timestamp
         readings.add_reading(copy_registers)
-        # Write to CSV every 60 seconds
-        if i == WRITE_AT_SECS:
+        # Write to CSV every WRITE_AT_SECS seconds
+        if (i%WRITE_AT_SECS) == 0:
             readings.append_to_csv()
         # Read the inverter every second
         time.sleep(1)
 
-with ModbusClient(
-        method='rtu',
-        port=PORT,
-        baudrate=9600,
-        stopbits=1,
-        parity='N',
-        bytesize=8,
-        timeout=1) as inverter:
-    logging.info('Connected, start reading from inverter...')
-    read_inverter(inverter)
-    logging.info("Stopped reading from inverter.")
+if __name__ == '__main__':
+    try:
+        with ModbusClient(
+                method='rtu',
+                port=PORT,
+                baudrate=9600,
+                stopbits=1,
+                parity='N',
+                bytesize=8,
+                timeout=1) as inverter:
+            logging.info('Connected, start reading from inverter...')
+            read_inverter(inverter)
+            logging.info("Stopped reading from inverter.")
+    except ConnectionException as e:
+        logging.error(e)
 
-logging.info('Exciting script.')
+    logging.info('Exciting script.')
