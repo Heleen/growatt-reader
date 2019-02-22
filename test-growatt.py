@@ -51,13 +51,16 @@ class Readings:
     def add_reading(self, reading):
         self.readings.append(reading)
 
+    def empty_readings(self):
+        self.readings = []
+
     def append_to_csv(self):
         logging.info('Writing %i readings to file.' % WRITE_AT_SECS)
         time1 = time.time()
         with open(CSVFILE, 'a', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerows(self.readings)
-        self.readings = []  # Empty readings
+        self.empty_readings()
         time2 = time.time()
         logging.info("Writing readings to file took: %0.3f ms" % ((time2 - time1) * 1000.0))
 
