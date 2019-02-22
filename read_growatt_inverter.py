@@ -16,18 +16,15 @@ from pymodbus.exceptions import ConnectionException
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s',
-    #filename='debugger.log',
+    filename='debugger.log',
     level=logging.INFO)
 logging.info('Enter script')
 
 # Read data from inverter
-PORT = '/dev/ttyUSB0'
-#port = '/tmp/ttyUSB0'
-
+PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
 CSVFILE = 'inverter.csv'
-
-NUM_OF_SECS_TO_RUN = 5
-WRITE_AT_SECS = 5
+#NUM_OF_SECS_TO_RUN = 5
+WRITE_AT_SECS = 60*10
 
 
 def get_lock(process_name):
@@ -71,7 +68,7 @@ def read_inverter(inverter):
     readings = Readings()
 
     i = 0
-    while i != NUM_OF_SECS_TO_RUN+1:
+    while True:  # i != NUM_OF_SECS_TO_RUN+1:
         i += 1
         try:
             rr = inverter.read_input_registers(0, 45)
@@ -79,8 +76,10 @@ def read_inverter(inverter):
             # Write one last time in case inverter has suddenly
             # turned off for the day.
             logging.error(e)
+            logging.info("Inverter has turned off for the day, writing readings one last time.")
             readings.append_to_csv()
-            raise
+            logging.info("Exiting script.")
+            sys.exit()
         copy_registers = rr.registers
         # Add a unix timestamp
         timestamp = time.time()
