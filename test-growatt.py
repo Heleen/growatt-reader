@@ -7,17 +7,12 @@ socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - "PTY,link=/tmp/ttyUSB0
 
 import csv
 import logging
-import os
+import socket
 import sys
 import time
 
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.exceptions import ConnectionException
-
-
-pid = str(os.getpid())
-pidfile = "inverterdaemon.pid"
-
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s',
@@ -33,6 +28,19 @@ CSVFILE = 'inverter.csv'
 
 NUM_OF_SECS_TO_RUN = 60*60
 WRITE_AT_SECS = 60*10
+
+
+def get_lock(process_name):
+    # Without holding a reference to our socket somewhere it gets garbage
+    # collected when the function exits
+    get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+    try:
+        get_lock._lock_socket.bind('\0' + process_name)
+	logging.info("I got the lock.")
+    except socket.error:
+	logging.warning("Lock already exists, exciting script.")
+        sys.exit()
 
 
 class Readings:
@@ -74,6 +82,7 @@ def read_inverter(inverter):
         time.sleep(1)
 
 if __name__ == '__main__':
+    get_lock('reading_inverter')
     try:
         with ModbusClient(
                 method='rtu',
@@ -89,4 +98,5 @@ if __name__ == '__main__':
     except ConnectionException as e:
         logging.error(e)
     finally:
+	# No need to release the lock, it it automatically closed in garbage collection.
         logging.info('Exciting script.')
