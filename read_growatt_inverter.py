@@ -31,8 +31,9 @@ WRITE_AT_SECS = 5
 
 
 def get_lock(process_name):
-    # Without holding a reference to our socket somewhere it gets garbage
-    # collected when the function exits
+    """Without holding a reference to our socket somewhere it gets garbage
+    collected when the function exits.
+    """
     get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 
     try:
@@ -44,7 +45,8 @@ def get_lock(process_name):
 
 
 class Readings:
-    """Singleton class to hold readings in memory and periodically save them to file.
+    """Singleton class to hold readings in memory and periodically save them to
+    file.
     """
     readings = []
 
@@ -71,7 +73,14 @@ def read_inverter(inverter):
     i = 0
     while i != NUM_OF_SECS_TO_RUN+1:
         i += 1
-        rr = inverter.read_input_registers(0, 45)
+        try:
+            rr = inverter.read_input_registers(0, 45)
+        except Exception as e:
+            # Write one last time in case inverter has suddenly
+            # turned off for the day.
+            logging.error(e)
+            readings.append_to_csv()
+            raise
         copy_registers = rr.registers
         # Add a unix timestamp
         timestamp = time.time()
@@ -101,5 +110,6 @@ if __name__ == '__main__':
     except ConnectionException as e:
         logging.error(e)
     finally:
-	# No need to release the lock, it it automatically closed in garbage collection.
+        # No need to release the lock, it it automatically closed in garbage
+        # collection.
         logging.info('Exiting script.')
