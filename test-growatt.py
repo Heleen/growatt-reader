@@ -7,10 +7,16 @@ socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - "PTY,link=/tmp/ttyUSB0
 
 import csv
 import logging
+import os
+import sys
 import time
 
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.exceptions import ConnectionException
+
+
+pid = str(os.getpid())
+pidfile = "inverterdaemon.pid"
 
 
 logging.basicConfig(
@@ -25,8 +31,8 @@ PORT = '/dev/ttyUSB0'
 
 CSVFILE = 'inverter.csv'
 
-NUM_OF_SECS_TO_RUN = 60
-WRITE_AT_SECS = 60
+NUM_OF_SECS_TO_RUN = 60*60
+WRITE_AT_SECS = 60*10
 
 
 class Readings:
@@ -38,13 +44,14 @@ class Readings:
         self.readings.append(reading)
 
     def append_to_csv(self):
+        logger.info('Writing %i readings to file.' % WRITE_AT_SECS)
         time1 = time.time()
         with open(CSVFILE, 'a', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerows(self.readings)
         self.readings = []  # Empty readings
         time2 = time.time()
-        logging.info("Writing file took: %0.3f ms" % ((time2 - time1) * 1000.0))
+        logging.info("Writing readings to file took: %0.3f ms" % ((time2 - time1) * 1000.0))
 
 
 def read_inverter(inverter):
@@ -55,8 +62,10 @@ def read_inverter(inverter):
         i += 1
         rr = inverter.read_input_registers(0, 45)
         copy_registers = rr.registers
+        # Add a unix timestamp
         timestamp = time.time()
-        copy_registers.append(round(time.time()*1000.0))  # Add a unix timestamp
+        copy_registers.append(round(time.time()*1000.0))
+        # Add reading to readings in memory
         readings.add_reading(copy_registers)
         # Write to CSV every WRITE_AT_SECS seconds
         if (i%WRITE_AT_SECS) == 0:
@@ -79,5 +88,5 @@ if __name__ == '__main__':
             logging.info("Stopped reading from inverter.")
     except ConnectionException as e:
         logging.error(e)
-
-    logging.info('Exciting script.')
+    finally:
+        logging.info('Exciting script.')
