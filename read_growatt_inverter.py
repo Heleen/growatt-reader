@@ -90,7 +90,11 @@ def read_from_inverter(inverter):
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
         no_readings += 1
         try:
-            reading = inverter.read_input_registers(0, 45).registers
+            reading = inverter.read_input_registers(0, 45)
+            if isinstance(reading, Exception):
+                raise reading
+            else:
+                reading = reading.registers
         except ModbusIOException as e:
             # Write one last time in case connection is lost.
             logging.error(e)
