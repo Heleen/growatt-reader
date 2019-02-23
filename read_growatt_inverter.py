@@ -11,6 +11,8 @@ import socket
 import sys
 import time
 
+from contextlib import contextmanager
+
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.exceptions import ConnectionException
 from pymodbus.exceptions import ModbusIOException
@@ -75,7 +77,7 @@ class Readings:
         logging.info("Writing readings to file took: %0.3f ms" % ((time2 - time1) * 1000.0))
 
 
-def read_inverter(inverter):
+def read_from_inverter(inverter):
     readings = Readings()
 
     no_readings = 0
@@ -103,11 +105,12 @@ def read_inverter(inverter):
             time.sleep(1)
 
 
+@contextmanager
 def connect_to_inverter():
     try:
         with ModbusClient(**MODBUS_SETTINGS) as inverter:
             logging.info('Connected, start reading from inverter...')
-            read_inverter(inverter)
+            yield inverter
             logging.info("Stopped reading from inverter.")
     except ConnectionException as e:
         logging.warning("Did not manage to obtain a connection with the inverter.")
@@ -118,5 +121,6 @@ def connect_to_inverter():
 if __name__ == '__main__':
     get_lock('reading_inverter')
     while True:
-        connect_to_inverter()
-        time.sleep(1)
+        with connect_to_inverter() as inverter:
+            read_from_inverter(inverter)
+        time.sleep(60)
