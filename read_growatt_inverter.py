@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
+socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
+    "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
 """
 
 import csv
@@ -77,7 +78,9 @@ class Readings:
             writer.writerows(self.readings)
         self.empty_readings()
         time2 = time.time()
-        logging.info("Writing readings to file took: %0.3f ms" % ((time2 - time1) * 1000.0))
+        logging.info(
+            "Writing readings to file took: %0.3f ms" % (
+                (time2 - time1) * 1000.0))
 
 
 def read_from_inverter(inverter):
@@ -91,7 +94,9 @@ def read_from_inverter(inverter):
         except ModbusIOException as e:
             # Write one last time in case connection is lost.
             logging.error(e)
-            logging.warning("Lost connection with inverter, writing readings one last time.")
+            logging.warning(
+                "Lost connection with inverter, writing readings one last "
+                "time.")
             readings.append_to_csv()
             logging.info("Finished writing final results to CSV.")
             break
@@ -117,7 +122,8 @@ def connect_to_inverter():
             yield inverter
             logging.info("Stopped reading from inverter.")
     except ConnectionException as e:
-        logging.warning("Did not manage to obtain a connection with the inverter.")
+        logging.warning(
+            "Did not manage to obtain a connection with the inverter.")
     finally:
         logging.warning("Lost connection with inverter.")
 
@@ -127,6 +133,8 @@ if __name__ == '__main__':
     while True:
         with connect_to_inverter() as inverter:
             read_from_inverter(inverter)
-        logging.info("Trying to reconnect to the inverter in %i seconds." % TRY_RECONNECT_INTERVAL_SECS)
+        logging.info(
+            "Trying to reconnect to the inverter in %i seconds." % (
+                TRY_RECONNECT_INTERVAL_SECS))
         time.sleep(TRY_RECONNECT_INTERVAL_SECS)
         logging.info("Trying to reconnect to the inverter...")
