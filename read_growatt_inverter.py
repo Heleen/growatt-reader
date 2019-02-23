@@ -26,9 +26,11 @@ logging.info('Enter script')
 
 PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
 CSVFILE = 'inverter.csv'
-READ_INTERVAL_SECS = 1  # Read the inverter every second
+READ_INTERVAL_SECS = 1  # Read the inverter every second.
 #NUM_OF_SECS_TO_RUN = 5
-WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes
+WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes.
+TRY_RECONNECT_INTERVAL_SECS = 60  # Try a reconnect with the inverter every 60
+                                  # seconds.
 MODBUS_SETTINGS = {
     'method': 'rtu',
     'port': PORT,
@@ -104,6 +106,7 @@ def read_from_inverter(inverter):
                 readings.append_to_csv()
             # Read the inverter every READ_INTERVAL_SECS second
             time.sleep(READ_INTERVAL_SECS)
+    return None
 
 
 @contextmanager
@@ -124,4 +127,4 @@ if __name__ == '__main__':
     while True:
         with connect_to_inverter() as inverter:
             read_from_inverter(inverter)
-        time.sleep(60)
+        time.sleep(TRY_RECONNECT_INTERVAL_SECS)
