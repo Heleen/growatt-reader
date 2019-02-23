@@ -26,8 +26,9 @@ logging.info('Enter script')
 
 PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
 CSVFILE = 'inverter.csv'
+READ_INTERVAL_SECS = 1  # Read the inverter every second
 #NUM_OF_SECS_TO_RUN = 5
-WRITE_AT_SECS = 60*10
+WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes
 MODBUS_SETTINGS = {
     'method': 'rtu',
     'port': PORT,
@@ -84,7 +85,7 @@ def read_from_inverter(inverter):
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
         no_readings += 1
         try:
-            rr = inverter.read_input_registers(0, 45).registers
+            reading = inverter.read_input_registers(0, 45).registers
         except ModbusIOException as e:
             # Write one last time in case connection is lost.
             logging.error(e)
@@ -95,14 +96,14 @@ def read_from_inverter(inverter):
         else:
             # Add a unix timestamp
             timestamp = time.time()
-            rr.append(round(time.time()*1000.0))
+            reading.append(round(time.time()*1000.0))
             # Add reading to readings in memory
-            readings.add_reading(rr)
+            readings.add_reading(reading)
             # Write to CSV every WRITE_AT_SECS seconds
             if (no_readings%WRITE_AT_SECS) == 0:
                 readings.append_to_csv()
-            # Read the inverter every second
-            time.sleep(1)
+            # Read the inverter every READ_INTERVAL_SECS second
+            time.sleep(READ_INTERVAL_SECS)
 
 
 @contextmanager
