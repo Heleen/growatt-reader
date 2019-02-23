@@ -127,4 +127,6 @@ if __name__ == '__main__':
     while True:
         with connect_to_inverter() as inverter:
             read_from_inverter(inverter)
+        logging.info("Trying to reconnect to the inverter in %i seconds." % TRY_RECONNECT_INTERVAL_SECS)
         time.sleep(TRY_RECONNECT_INTERVAL_SECS)
+        logging.info("Trying to reconnect to the inverter...")
