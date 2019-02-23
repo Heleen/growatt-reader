@@ -37,6 +37,7 @@ def get_lock(process_name):
         get_lock._lock_socket.bind('\0' + process_name)
         logging.info("I got the lock.")
     except socket.error:
+        # TODO LOG PID
         logging.warning("Lock already exists, exiting script.")
         sys.exit()
 
@@ -78,8 +79,7 @@ def read_inverter(inverter):
             logging.error(e)
             logging.info("Inverter has turned off for the day, writing readings one last time.")
             readings.append_to_csv()
-            logging.info("Exiting script.")
-            sys.exit()
+            raise ConnectionException("Broken connection.")
         copy_registers = rr.registers
         # Add a unix timestamp
         timestamp = time.time()
