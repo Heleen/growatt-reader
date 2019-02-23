@@ -13,6 +13,8 @@ import time
 
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.exceptions import ConnectionException
+from pymodbus.exceptions import ModbusIOException
+
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s',
@@ -20,11 +22,19 @@ logging.basicConfig(
     level=logging.INFO)
 logging.info('Enter script')
 
-# Read data from inverter
 PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
 CSVFILE = 'inverter.csv'
 #NUM_OF_SECS_TO_RUN = 5
 WRITE_AT_SECS = 60*10
+MODBUS_SETTINGS = {
+    'method': 'rtu',
+    'port': PORT,
+    'baudrate': 9600,
+    'stopbits': 1,
+    'parity': 'N',
+    'bytesize': 8,
+    'timeout': 1,
+}
 
 
 def get_lock(process_name):
@@ -68,47 +78,45 @@ class Readings:
 def read_inverter(inverter):
     readings = Readings()
 
-    i = 0
+    no_readings = 0
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
-        i += 1
+        no_readings += 1
         try:
-            rr = inverter.read_input_registers(0, 45)
-        except Exception as e:
-            # Write one last time in case inverter has suddenly
-            # turned off for the day.
+            rr = inverter.read_input_registers(0, 45).registers
+        except ModbusIOException as e:
+            # Write one last time in case connection is lost.
             logging.error(e)
-            logging.info("Inverter has turned off for the day, writing readings one last time.")
+            logging.warning("Lost connection with inverter, writing readings one last time.")
             readings.append_to_csv()
-            raise ConnectionException("Broken connection.")
-        copy_registers = rr.registers
-        # Add a unix timestamp
-        timestamp = time.time()
-        copy_registers.append(round(time.time()*1000.0))
-        # Add reading to readings in memory
-        readings.add_reading(copy_registers)
-        # Write to CSV every WRITE_AT_SECS seconds
-        if (i%WRITE_AT_SECS) == 0:
-            readings.append_to_csv()
-        # Read the inverter every second
-        time.sleep(1)
+            logging.info("Finished writing final results to CSV.")
+            break
+        else:
+            # Add a unix timestamp
+            timestamp = time.time()
+            rr.append(round(time.time()*1000.0))
+            # Add reading to readings in memory
+            readings.add_reading(rr)
+            # Write to CSV every WRITE_AT_SECS seconds
+            if (no_readings%WRITE_AT_SECS) == 0:
+                readings.append_to_csv()
+            # Read the inverter every second
+            time.sleep(1)
 
-if __name__ == '__main__':
-    get_lock('reading_inverter')
+
+def connect_to_inverter():
     try:
-        with ModbusClient(
-                method='rtu',
-                port=PORT,
-                baudrate=9600,
-                stopbits=1,
-                parity='N',
-                bytesize=8,
-                timeout=1) as inverter:
+        with ModbusClient(**MODBUS_SETTINGS) as inverter:
             logging.info('Connected, start reading from inverter...')
             read_inverter(inverter)
             logging.info("Stopped reading from inverter.")
     except ConnectionException as e:
-        logging.error(e)
+        logging.warning("Did not manage to obtain a connection with the inverter.")
     finally:
-        # No need to release the lock, it it automatically closed in garbage
-        # collection.
-        logging.info('Exiting script.')
+        logging.warning("Lost connection with inverter.")
+
+
+if __name__ == '__main__':
+    get_lock('reading_inverter')
+    while True:
+        connect_to_inverter()
+        time.sleep(1)
