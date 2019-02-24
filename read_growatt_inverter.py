@@ -62,21 +62,21 @@ class Readings:
     """Singleton class to hold readings in memory and periodically save them to
     file.
     """
-    readings = []
+    __readings = []
+
+    def __empty_readings(self):
+        self.__readings = []
 
     def add_reading(self, reading):
-        self.readings.append(reading)
-
-    def empty_readings(self):
-        self.readings = []
+        self.__readings.append(reading)
 
     def append_to_csv(self):
         logging.info('Writing %i readings to file.' % WRITE_AT_SECS)
         time1 = time.time()
         with open(CSVFILE, 'a', encoding='utf-8') as f:
             writer = csv.writer(f)
-            writer.writerows(self.readings)
-        self.empty_readings()
+            writer.writerows(self.__readings)
+        self.__empty_readings()
         time2 = time.time()
         logging.info(
             "Writing readings to file took: %0.3f ms" % (
