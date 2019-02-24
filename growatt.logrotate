@@ -1,4 +1,4 @@
-/var/log/growatt/* {
+/var/log/growatt/*.log {
 	size 10M
 	rotate 5
 	missingok
