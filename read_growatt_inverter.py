@@ -71,7 +71,7 @@ class Readings:
         self.__readings.append(reading)
 
     def append_to_csv(self):
-        logging.info('Writing %i readings to file.' % WRITE_AT_SECS)
+        logging.info('Writing %i readings to file.' % len(self.__readings))
         time1 = time.time()
         with open(CSVFILE, 'a', encoding='utf-8') as f:
             writer = csv.writer(f)
