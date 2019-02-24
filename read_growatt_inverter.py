@@ -79,31 +79,33 @@ def get_lock(process_name):
 class Readings:
     """Class to hold readings in memory and periodically save them to file.
     """
-    __readings = []
 
-    def __empty_readings(self):
-        self.__readings = []
+    def __init__(self, *args, **kwargs):
+        self._readings = []
+
+    def _empty_readings(self):
+        self._readings = []
 
     def add_reading(self, reading):
-        self.__readings.append(reading)
+        self._readings.append(reading)
 
     def append_to_csv(self):
-        if not self.__readings:
+        if not self._readings:
             logging.info(
                 "There are currently no readings in memory. "
                 "Skip writing readings to CSV."
             )
         else:
-            logging.info('Writing %i readings to file.' % len(self.__readings))
+            logging.info('Writing %i readings to file.' % len(self._readings))
             time1 = time.time()
             try:
                 with open(CSVFILE, 'a', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerows(self.__readings)
+                    writer.writerows(self._readings)
             except Exception as e:
                 logging.error("Could not write to CSV. %s", e)
             else:
-                self.__empty_readings()
+                self._empty_readings()
                 time2 = time.time()
                 logging.info(
                     "Writing readings to file took: %0.3f ms" % (
