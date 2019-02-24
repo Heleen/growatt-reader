@@ -1,0 +1,10 @@
+/var/log/growatt/* {
+	size 10M
+	rotate 5
+	missingok
+}
+/home/pi/growatt/inverter.csv {
+	daily
+	dateext
+	compress
+}
