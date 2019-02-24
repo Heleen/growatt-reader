@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
+Service to periodically read from a Growatt inverter connected on a serial port
+with the Modbus protocol and write the results to a CSV file.
+
+
 socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
     "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
 """
@@ -59,8 +63,7 @@ def get_lock(process_name):
 
 
 class Readings:
-    """Singleton class to hold readings in memory and periodically save them to
-    file.
+    """Class to hold readings in memory and periodically save them to file.
     """
     __readings = []
 
@@ -94,6 +97,10 @@ class Readings:
 
 
 def read_from_inverter(inverter):
+    """Read from the inverter every X seconds while the connection is not
+    broken.
+    Write the results to CSV every Y seconds.
+    """
     readings = Readings()
 
     no_readings = 0
@@ -130,6 +137,8 @@ def read_from_inverter(inverter):
 
 @contextmanager
 def connect_to_inverter():
+    """Set up a connection with the inverter.
+    """
     try:
         with ModbusClient(**MODBUS_SETTINGS) as inverter:
             logging.info('Connected, start reading from inverter...')
@@ -143,6 +152,11 @@ def connect_to_inverter():
 
 
 if __name__ == '__main__':
+    """Set up a connection with the inverter. When the connection is broken try
+    to reconnect every X seconds.
+    While connection with inverter is live, periodically read from the inverter
+    and write the results to a CSV.
+    """
     get_lock('reading_inverter')
     while True:
         with connect_to_inverter() as inverter:
