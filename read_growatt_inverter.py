@@ -25,7 +25,7 @@ from pymodbus.exceptions import ModbusIOException
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s',
-    filename='debugger.log',
+    filename='/var/log/growatt/growatt_reader.log',
     level=logging.INFO)
 logging.info('Enter script')
 
