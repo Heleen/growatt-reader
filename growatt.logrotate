@@ -2,6 +2,7 @@
 	size 10M
 	rotate 5
 	missingok
+    olddir /home/pi/growatt/logs
 }
 /home/pi/growatt/results/inverter.csv {
 	daily
