@@ -71,16 +71,26 @@ class Readings:
         self.__readings.append(reading)
 
     def append_to_csv(self):
-        logging.info('Writing %i readings to file.' % len(self.__readings))
-        time1 = time.time()
-        with open(CSVFILE, 'a', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerows(self.__readings)
-        self.__empty_readings()
-        time2 = time.time()
-        logging.info(
-            "Writing readings to file took: %0.3f ms" % (
-                (time2 - time1) * 1000.0))
+        if not self.__readings:
+            logging.info(
+                "There are currently no readings in memory. "
+                "Skip writing readings to CSV."
+            )
+        else:
+            logging.info('Writing %i readings to file.' % len(self.__readings))
+            time1 = time.time()
+            try:
+                with open(CSVFILE, 'a', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerows(self.__readings)
+            except Exception as e:
+                logging.error("Could not write to CSV. %s", e)
+            else:
+                self.__empty_readings()
+                time2 = time.time()
+                logging.info(
+                    "Writing readings to file took: %0.3f ms" % (
+                        (time2 - time1) * 1000.0))
 
 
 def read_from_inverter(inverter):
