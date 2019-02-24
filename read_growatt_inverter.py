@@ -18,7 +18,7 @@ import time
 
 from contextlib import contextmanager
 
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.exceptions import ConnectionException
 from pymodbus.exceptions import ModbusIOException
 
@@ -140,7 +140,7 @@ def connect_to_inverter():
     """Set up a connection with the inverter.
     """
     try:
-        with ModbusClient(**MODBUS_SETTINGS) as inverter:
+        with ModbusSerialClient(**MODBUS_SETTINGS) as inverter:
             logging.info('Connected, start reading from inverter...')
             yield inverter
             logging.info("Stopped reading from inverter.")
