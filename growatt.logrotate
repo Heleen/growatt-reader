@@ -3,7 +3,7 @@
 	rotate 5
 	missingok
 }
-/home/pi/growatt/inverter.csv {
+/home/pi/growatt/results/inverter.csv {
 	daily
 	dateext
 	compress

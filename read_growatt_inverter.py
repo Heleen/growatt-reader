@@ -31,7 +31,7 @@ logging.basicConfig(
 logging.info('Enter script')
 
 PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
-CSVFILE = 'inverter.csv'
+CSVFILE = '/home/pi/growatt/results/inverter.csv'
 READ_INTERVAL_SECS = 1  # Read the inverter every second.
 #NUM_OF_SECS_TO_RUN = 5
 WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes.
