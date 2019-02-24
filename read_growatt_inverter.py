@@ -12,6 +12,7 @@ socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
 
 import csv
 import logging
+import signal
 import socket
 import sys
 import time
@@ -45,6 +46,19 @@ MODBUS_SETTINGS = {
     'bytesize': 8,
     'timeout': 1,
 }
+
+
+class GracefulKiller:
+    """Class to gracefully handle interrupts.
+    """
+    kill_now = False
+
+    def __init__(self):
+	signal.signal(signal.SIGINT, self.exit_gracefully)
+	signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self,signum, frame):
+	self.kill_now = True
 
 
 def get_lock(process_name):
@@ -96,7 +110,7 @@ class Readings:
                         (time2 - time1) * 1000.0))
 
 
-def read_from_inverter(inverter):
+def read_from_inverter(inverter, killer):
     """Read from the inverter every X seconds while the connection is not
     broken.
     Write the results to CSV every Y seconds.
@@ -105,6 +119,13 @@ def read_from_inverter(inverter):
 
     no_readings = 0
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
+        if killer.kill_now:
+            logging.warning(
+                "Killed by external source. "
+                "Writing readings buffer to CSV and stop.")
+            readings.append_to_csv()
+            break
+
         no_readings += 1
         try:
             reading = inverter.read_input_registers(0, 45)
@@ -158,11 +179,15 @@ if __name__ == '__main__':
     and write the results to a CSV.
     """
     get_lock('reading_inverter')
+    killer = GracefulKiller()
     while True:
         with connect_to_inverter() as inverter:
-            read_from_inverter(inverter)
+            read_from_inverter(inverter, killer)
+        if killer.kill_now:
+           break
         logging.info(
             "Trying to reconnect to the inverter in %i seconds." % (
                 TRY_RECONNECT_INTERVAL_SECS))
         time.sleep(TRY_RECONNECT_INTERVAL_SECS)
         logging.info("Trying to reconnect to the inverter...")
+    logging.warning("Killed by external source. Gracefully exited.")
