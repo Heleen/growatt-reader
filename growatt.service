@@ -1,0 +1,12 @@
+[Unit]
+Description=Growatt Inverter Reader
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/growatt
+ExecStart=/home/pi/growatt/env/bin/python /home/pi/growatt/read_growatt_inverter.py
+Restart=on-failure
+# Other Restart options: or always, on-abort, etc
+
+[Install]
+WantedBy=multi-user.target
