@@ -33,10 +33,11 @@ logging.info('Enter script')
 PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
 CSVFILE = '/home/pi/growatt/results/inverter.csv'
 READ_INTERVAL_SECS = 1  # Read the inverter every second.
-#NUM_OF_SECS_TO_RUN = 5
+# NUM_OF_SECS_TO_RUN = 5
 WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes.
-TRY_RECONNECT_INTERVAL_SECS = 60  # Try a reconnect with the inverter every 60
-                                  # seconds.
+# Try a reconnect with the inverter every 60 seconds.
+TRY_RECONNECT_INTERVAL_SECS = 60
+
 MODBUS_SETTINGS = {
     'method': 'rtu',
     'port': PORT,
@@ -57,7 +58,7 @@ class GracefulKiller:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-    def exit_gracefully(self,signum, frame):
+    def exit_gracefully(self, signum, frame):
         self.kill_now = True
 
 
@@ -144,12 +145,11 @@ def read_from_inverter(inverter, killer):
             break
         else:
             # Add a unix timestamp
-            timestamp = time.time()
             reading.append(round(time.time()*1000.0))
             # Add reading to readings in memory
             readings.add_reading(reading)
             # Write to CSV every WRITE_AT_SECS seconds
-            if (no_readings%WRITE_AT_SECS) == 0:
+            if (no_readings % WRITE_AT_SECS) == 0:
                 readings.append_to_csv()
             # Read the inverter every READ_INTERVAL_SECS second
             time.sleep(READ_INTERVAL_SECS)
@@ -167,7 +167,7 @@ def connect_to_inverter():
             logging.info("Stopped reading from inverter.")
     except ConnectionException as e:
         logging.warning(
-            "Did not manage to obtain a connection with the inverter.")
+            "Did not manage to obtain a connection with the inverter.", e)
     finally:
         logging.warning("Lost connection with inverter.")
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
         with connect_to_inverter() as inverter:
             read_from_inverter(inverter, killer)
         if killer.kill_now:
-           break
+            break
         logging.info(
             "Trying to reconnect to the inverter in %i seconds." % (
                 TRY_RECONNECT_INTERVAL_SECS))
