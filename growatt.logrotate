@@ -1,11 +1,15 @@
 /var/log/growatt/*.log {
-	size 10M
-	rotate 5
-	missingok
+    size 10M
+    rotate 5
+    missingok
+    compress
     olddir /home/pi/growatt/logs
+    renamecopy
+    su pi pi
 }
 /home/pi/growatt/results/inverter.csv {
-	daily
-	dateext
-	compress
+    rotate 9999
+    daily
+    dateext
+    compress
 }
