@@ -1,6 +1,6 @@
-==========================
-Growatt Serial Port Reader
-==========================
+===================================
+Growatt Inverter Serial Port Reader
+===================================
 
 ------------
 Requirements
