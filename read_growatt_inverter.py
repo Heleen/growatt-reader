@@ -10,6 +10,7 @@ socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
     "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
 """
 
+import argparse
 import csv
 import logging
 import signal
@@ -24,23 +25,19 @@ from pymodbus.exceptions import ConnectionException
 from pymodbus.exceptions import ModbusIOException
 
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s:%(message)s',
-    filename='/var/log/growatt/growatt_reader.log',
-    level=logging.INFO)
-logging.info('Enter script')
+try:
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s:%(message)s',
+        filename='/var/log/growatt/growatt_reader.log',
+        level=logging.INFO)
+except FileNotFoundError:
+    logging.basicConfig()
+logging.info('Enter Growatt Reader Script')
 
-PORT = '/dev/ttyUSB0'  # '/tmp/ttyUSB0'
-CSVFILE = '/home/pi/growatt/results/inverter.csv'
-READ_INTERVAL_SECS = 1  # Read the inverter every second.
-# NUM_OF_SECS_TO_RUN = 5
-WRITE_AT_SECS = 60*10  # Write the readings to CSV every 10 minutes.
-# Try a reconnect with the inverter every 60 seconds.
-TRY_RECONNECT_INTERVAL_SECS = 60
 
 MODBUS_SETTINGS = {
     'method': 'rtu',
-    'port': PORT,
+    'port': '/dev/ttyUSB0',
     'baudrate': 9600,
     'stopbits': 1,
     'parity': 'N',
@@ -81,8 +78,9 @@ class Readings:
     """Class to hold readings in memory and periodically save them to file.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, output_file):
         self._readings = []
+        self._output_file = output_file
 
     def _empty_readings(self):
         self._readings = []
@@ -100,7 +98,7 @@ class Readings:
             logging.info('Writing %i readings to file.' % len(self._readings))
             time1 = time.time()
             try:
-                with open(CSVFILE, 'a', encoding='utf-8') as f:
+                with open(self._output_file, 'a', encoding='utf-8') as f:
                     writer = csv.writer(f)
                     writer.writerows(self._readings)
             except Exception as e:
@@ -113,12 +111,17 @@ class Readings:
                         (time2 - time1) * 1000.0))
 
 
-def read_from_inverter(inverter, killer):
+def read_from_inverter(
+        inverter,
+        killer,
+        output_file,
+        read_interval,
+        write_interval):
     """Read from the inverter every X seconds while the connection is not
     broken.
     Write the results to CSV every Y seconds.
     """
-    readings = Readings()
+    readings = Readings(output_file)
 
     no_readings = 0
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
@@ -151,19 +154,21 @@ def read_from_inverter(inverter, killer):
             # Add reading to readings in memory
             readings.add_reading(reading)
             # Write to CSV every WRITE_AT_SECS seconds
-            if (no_readings % WRITE_AT_SECS) == 0:
+            if (no_readings % write_interval) == 0:
                 readings.append_to_csv()
             # Read the inverter every READ_INTERVAL_SECS second
-            time.sleep(READ_INTERVAL_SECS)
+            time.sleep(read_interval)
     return None
 
 
 @contextmanager
-def connect_to_inverter():
+def connect_to_inverter(port):
     """Set up a connection with the inverter.
     """
+    modbus_settings = MODBUS_SETTINGS
+    modbus_settings['port'] = port
     try:
-        with ModbusSerialClient(**MODBUS_SETTINGS) as inverter:
+        with ModbusSerialClient(**modbus_settings) as inverter:
             logging.info('Connected, start reading from inverter...')
             yield inverter
             logging.info("Stopped reading from inverter.")
@@ -180,16 +185,64 @@ if __name__ == '__main__':
     While connection with inverter is live, periodically read from the inverter
     and write the results to a CSV.
     """
+
+    parser = argparse.ArgumentParser(
+        description='Start the Growatt Serial Port Reader')
+    parser.add_argument(
+        '-p',
+        '--port',
+        type=str,
+        default='/dev/ttyUSB0',
+        dest='port',
+        help="The port on which the inverter is connected, default: "
+             "'/dev/ttyUSB0'.")
+    parser.add_argument(
+        '-o',
+        '--output',
+        type=str,
+        default='/home/pi/growatt/results/inverter.csv',
+        dest='output',
+        help="The output CSV file, default: "
+             "'/home/pi/growatt/results/inverter.csv'.")
+    parser.add_argument(
+        '-i',
+        '--read-interval',
+        type=int,
+        default=1,
+        dest='read_interval',
+        help="Read interval in seconds, default: 1.")
+    parser.add_argument(
+        '-w',
+        '--write-interval',
+        type=int,
+        default=600,
+        dest='write_interval',
+        help="Write cached data interval in seconds, default: 600.")
+    parser.add_argument(
+        '-c',
+        '--reconnect-wait',
+        type=int,
+        default=60,
+        dest='reconnect_wait',
+        help="Attempt reconnect to serial port in seconds, default: 60.")
+
+    args = parser.parse_args()
+
     get_lock('reading_inverter')
     killer = GracefulKiller()
     while True:
-        with connect_to_inverter() as inverter:
-            read_from_inverter(inverter, killer)
+        with connect_to_inverter(args.port) as inverter:
+            read_from_inverter(
+                inverter,
+                killer,
+                args.output,
+                args.read_interval,
+                args.write_interval)
         if killer.kill_now:
             break
         logging.info(
             "Trying to reconnect to the inverter in %i seconds." % (
-                TRY_RECONNECT_INTERVAL_SECS))
-        time.sleep(TRY_RECONNECT_INTERVAL_SECS)
+                args.reconnect_wait))
+        time.sleep(args.reconnect_wait)
         logging.info("Trying to reconnect to the inverter...")
     logging.warning("Killed by external source. Gracefully exited.")
