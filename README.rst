@@ -61,3 +61,6 @@ Notes
 - If you want proper logging: create
   ``/var/log/growatt/growatt_reader.log`` and it will write logging
   to it.
+- The script currently reads registers 0-45. According to the documentation
+  there should be more than 45 registers, however during testing I couldn't
+  read more than the first 45 registers.
