@@ -2,13 +2,19 @@
 Growatt Inverter Serial Port Reader
 ===================================
 
+Read data from a Growatt inverter serial port and periodically write it to
+a CSV file.
+
+Includes a logrotate example config to compress and rotate the results CSV.
+Also includes an example service file to run the script as a service.
+
 ------------
 Requirements
 ------------
 
 * Python3
-* Logrotate
-* SystemCTL
+* Logrotate (optional)
+* SystemCTL (optional)
 
 -----
 Usage
@@ -50,4 +56,5 @@ Usage
 Notes
 -----
 
-- Tested on the Growatt 3000 MTL-S
+- Tested (v1.0) on a Raspberry Pi 2B connected to a
+  Growatt 3000 MTL-S inverter via serial (RS232) to USB cable.
