@@ -140,6 +140,8 @@ def read_from_inverter(
         try:
             reading = inverter.read_input_registers(0, 45)
             if isinstance(reading, Exception):
+                # Fix for PyModbus 'returning' the Exception rather than
+                # 'raising' it.
                 raise reading
             else:
                 reading = reading.registers
