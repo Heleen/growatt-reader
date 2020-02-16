@@ -47,7 +47,8 @@ MODBUS_SETTINGS = {
 
 
 class GracefulKiller:
-    """Class to gracefully handle interrupts.
+    """
+    Class to gracefully handle interrupts.
     """
     kill_now = False
 
@@ -60,7 +61,8 @@ class GracefulKiller:
 
 
 def get_lock(process_name):
-    """Without holding a reference to our socket somewhere it gets garbage
+    """
+    Without holding a reference to our socket somewhere it gets garbage
     collected when the function exits.
     """
     get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -75,7 +77,8 @@ def get_lock(process_name):
 
 
 class Readings:
-    """Class to hold readings in memory and periodically save them to file.
+    """
+    Class to hold readings in memory and periodically save them to file.
     """
 
     def __init__(self, output_file):
@@ -117,7 +120,8 @@ def read_from_inverter(
         output_file,
         read_interval,
         write_interval):
-    """Read from the inverter every X seconds while the connection is not
+    """
+    Read from the inverter every X seconds while the connection is not
     broken.
     Write the results to CSV every Y seconds.
     """
@@ -163,7 +167,8 @@ def read_from_inverter(
 
 @contextmanager
 def connect_to_inverter(port):
-    """Set up a connection with the inverter.
+    """
+    Set up a connection with the inverter.
     """
     modbus_settings = MODBUS_SETTINGS
     modbus_settings['port'] = port
@@ -180,7 +185,8 @@ def connect_to_inverter(port):
 
 
 if __name__ == '__main__':
-    """Set up a connection with the inverter. When the connection is broken try
+    """
+    Set up a connection with the inverter. When the connection is broken try
     to reconnect every X seconds.
     While connection with inverter is live, periodically read from the inverter
     and write the results to a CSV.
