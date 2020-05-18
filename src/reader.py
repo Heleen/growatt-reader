@@ -18,12 +18,6 @@ import socket
 import sys
 import time
 
-from contextlib import contextmanager
-
-from pymodbus.client.sync import ModbusSerialClient
-from pymodbus.exceptions import ConnectionException
-from pymodbus.exceptions import ModbusIOException
-
 
 try:
     logging.basicConfig(
@@ -33,17 +27,6 @@ try:
 except FileNotFoundError:
     logging.basicConfig()
 logging.info('Enter Growatt Reader Script')
-
-
-MODBUS_SETTINGS = {
-    'method': 'rtu',
-    'port': '/dev/ttyUSB0',
-    'baudrate': 9600,
-    'stopbits': 1,
-    'parity': 'N',
-    'bytesize': 8,
-    'timeout': 1,
-}
 
 
 class GracefulKiller:
@@ -81,15 +64,19 @@ class Readings:
     Class to hold readings in memory and periodically save them to file.
     """
 
-    def __init__(self, output_file):
+    def __init__(self, output_file, write_interval):
         self._readings = []
         self._output_file = output_file
+        self._write_interval = write_interval
 
     def _empty_readings(self):
         self._readings = []
 
     def add_reading(self, reading):
         self._readings.append(reading)
+        # Write to CSV every WRITE_AT_SECS seconds
+        if (len(self._readings) % self._write_interval) == 0:
+            self.append_to_csv()
 
     def append_to_csv(self):
         if not self._readings:
@@ -114,20 +101,17 @@ class Readings:
                         (time2 - time1) * 1000.0))
 
 
-def read_from_inverter(
-        inverter,
+def read_from_device(
+        device,
         killer,
-        output_file,
-        read_interval,
-        write_interval):
+        readings,
+        read_interval):
     """
     Read from the inverter every X seconds while the connection is not
     broken.
     Write the results to CSV every Y seconds.
     """
-    readings = Readings(output_file)
 
-    no_readings = 0
     while True:  # i != NUM_OF_SECS_TO_RUN+1:
         if killer.kill_now:
             logging.warning(
@@ -136,21 +120,13 @@ def read_from_inverter(
             readings.append_to_csv()
             break
 
-        no_readings += 1
         try:
-            reading = inverter.read_input_registers(0, 45)
-            if isinstance(reading, Exception):
-                # Fix for PyModbus 'returning' the Exception rather than
-                # 'raising' it.
-                raise reading
-            else:
-                reading = reading.registers
-        except ModbusIOException as e:
+            reading = readline(device)  # TODO
+        except Exception as e:
             # Write one last time in case connection is lost.
             logging.error(e)
             logging.warning(
-                "Lost connection with inverter, writing readings one last "
-                "time.")
+                "Something went wrong, writing readings one last time.")
             readings.append_to_csv()
             logging.info("Finished writing final results to CSV.")
             break
@@ -159,31 +135,9 @@ def read_from_inverter(
             reading.append(round(time.time()*1000.0))
             # Add reading to readings in memory
             readings.add_reading(reading)
-            # Write to CSV every WRITE_AT_SECS seconds
-            if (no_readings % write_interval) == 0:
-                readings.append_to_csv()
             # Read the inverter every READ_INTERVAL_SECS second
             time.sleep(read_interval)
     return None
-
-
-@contextmanager
-def connect_to_inverter(port):
-    """
-    Set up a connection with the inverter.
-    """
-    modbus_settings = MODBUS_SETTINGS
-    modbus_settings['port'] = port
-    try:
-        with ModbusSerialClient(**modbus_settings) as inverter:
-            logging.info('Connected, start reading from inverter...')
-            yield inverter
-            logging.info("Stopped reading from inverter.")
-    except ConnectionException as e:
-        logging.warning(
-            "Did not manage to obtain a connection with the inverter.", e)
-    finally:
-        logging.warning("Lost connection with inverter.")
 
 
 if __name__ == '__main__':
@@ -195,7 +149,7 @@ if __name__ == '__main__':
     """
 
     parser = argparse.ArgumentParser(
-        description='Start the Growatt Serial Port Reader')
+        description='Start the Serial Port Reader')
     parser.add_argument(
         '-p',
         '--port',
@@ -205,13 +159,21 @@ if __name__ == '__main__':
         help="The port on which the inverter is connected, default: "
              "'/dev/ttyUSB0'.")
     parser.add_argument(
+        '-d',
+        '--device',
+        type=str,
+        default='growatt-inverter',
+        dest='device',
+        help="The type of device being read (growatt-inverter or p1-port), default: "
+             "'growatt-inverter'.")
+    parser.add_argument(
         '-o',
         '--output',
         type=str,
-        default='/home/pi/growatt/results/inverter.csv',
+        default='/home/pi/growatt/results/readings.csv',
         dest='output',
         help="The output CSV file, default: "
-             "'/home/pi/growatt/results/inverter.csv'.")
+             "'/home/pi/growatt/results/readings.csv'.")
     parser.add_argument(
         '-i',
         '--read-interval',
@@ -236,21 +198,22 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    get_lock('reading_inverter')
+    get_lock('reading_device')
     killer = GracefulKiller()
+    readings = Readings(args.output, write_interval)
     while True:
-        with connect_to_inverter(args.port) as inverter:
-            read_from_inverter(
-                inverter,
+        with connect_to_device(args.port) as device:
+            read_from_device(
+                device,
                 killer,
-                args.output,
-                args.read_interval,
-                args.write_interval)
+                readings,
+                args.read_interval)
         if killer.kill_now:
             break
         logging.info(
-            "Trying to reconnect to the inverter in %i seconds." % (
-                args.reconnect_wait))
+            "Trying to reconnect to the %s in %i seconds.",
+            args.device,
+            args.reconnect_wait)
         time.sleep(args.reconnect_wait)
-        logging.info("Trying to reconnect to the inverter...")
+        logging.info("Trying to reconnect to the %s...", args.device)
     logging.warning("Killed by external source. Gracefully exited.")
