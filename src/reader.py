@@ -18,6 +18,9 @@ import socket
 import sys
 import time
 
+from .devices.growatt_inverter import Inverter
+from .devices.p1_port import P1Port
+
 
 try:
     logging.basicConfig(
@@ -101,42 +104,50 @@ class Readings:
                         (time2 - time1) * 1000.0))
 
 
+def _get_device(device_name):
+    if device_name == 'p1-port':
+        return P1Port
+    return Inverter
+
+
 def read_from_device(
-        device,
         killer,
-        readings,
+        device_name,
         read_interval):
     """
     Read from the inverter every X seconds while the connection is not
     broken.
     Write the results to CSV every Y seconds.
     """
+    readings = Readings(args.output, args.write_interval)
+    device = _get_device(device_name)()
 
-    while True:  # i != NUM_OF_SECS_TO_RUN+1:
-        if killer.kill_now:
-            logging.warning(
-                "Killed by external source. "
-                "Writing readings buffer to CSV and stop.")
-            readings.append_to_csv()
-            break
+    with device.connect_to_device() as device_conn:
+        while True:
+            if killer.kill_now:
+                logging.warning(
+                    "Killed by external source. "
+                    "Writing readings buffer to CSV and stop.")
+                readings.append_to_csv()
+                break
 
-        try:
-            reading = readline(device)  # TODO
-        except Exception as e:
-            # Write one last time in case connection is lost.
-            logging.error(e)
-            logging.warning(
-                "Something went wrong, writing readings one last time.")
-            readings.append_to_csv()
-            logging.info("Finished writing final results to CSV.")
-            break
-        else:
-            # Add a unix timestamp
-            reading.append(round(time.time()*1000.0))
-            # Add reading to readings in memory
-            readings.add_reading(reading)
-            # Read the inverter every READ_INTERVAL_SECS second
-            time.sleep(read_interval)
+            try:
+                reading = device.readline(device_conn)
+            except Exception as e:
+                # Write one last time in case connection is lost.
+                logging.error(e)
+                logging.warning(
+                    "Something went wrong, writing readings one last time.")
+                readings.append_to_csv()
+                logging.info("Finished writing final results to CSV.")
+                break
+            else:
+                # Add a unix timestamp
+                reading.append(round(time.time()*1000.0))
+                # Add reading to readings in memory
+                readings.add_reading(reading)
+                # Read the inverter every READ_INTERVAL_SECS second
+                time.sleep(read_interval)
     return None
 
 
@@ -164,8 +175,8 @@ if __name__ == '__main__':
         type=str,
         default='growatt-inverter',
         dest='device',
-        help="The type of device being read (growatt-inverter or p1-port), default: "
-             "'growatt-inverter'.")
+        help="The type of device being read (growatt-inverter or p1-port),"
+             " default: 'growatt-inverter'.")
     parser.add_argument(
         '-o',
         '--output',
@@ -200,14 +211,11 @@ if __name__ == '__main__':
 
     get_lock('reading_device')
     killer = GracefulKiller()
-    readings = Readings(args.output, write_interval)
     while True:
-        with connect_to_device(args.port) as device:
-            read_from_device(
-                device,
-                killer,
-                readings,
-                args.read_interval)
+        read_from_device(
+            killer,
+            args.device,
+            args.read_interval)
         if killer.kill_now:
             break
         logging.info(
