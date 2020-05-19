@@ -1,13 +1,13 @@
-/var/log/growatt/*.log {
+/var/log/timeseries-reader/*.log {
     size 10M
     rotate 5
     missingok
     compress
-    olddir /home/pi/growatt/logs
+    olddir /home/pi/timeseries-reader/logs
     renamecopy
     su pi pi
 }
-/home/pi/growatt/results/inverter.csv {
+/home/pi/timeseries-reader/results/inverter.csv {
     rotate 9999
     daily
     dateext

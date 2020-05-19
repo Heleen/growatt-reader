@@ -1,10 +1,10 @@
 [Unit]
-Description=Growatt Inverter Reader
+Description=Timeseries Reader
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/growatt
-ExecStart=/home/pi/growatt/env/bin/python /home/pi/growatt/read_growatt_inverter.py
+WorkingDirectory=/home/pi/timeseries-reader
+ExecStart=/home/pi/timeseries-reader/env/bin/python /home/pi/timeseries-reader/src/cli.py
 Restart=on-failure
 # Other Restart options: or always, on-abort, etc
 
