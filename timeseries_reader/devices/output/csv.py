@@ -2,8 +2,8 @@ import csv
 import logging
 import time
 
-from ._base import BaseWriter
-from ...utils.config import config
+from timeseries_reader.devices.output._base import BaseWriter
+from timeseries_reader.utils.config import config
 
 logger = logging.getLogger(__name__)
 

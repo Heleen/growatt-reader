@@ -10,10 +10,10 @@ import argparse
 import logging
 import time
 
-from .reader import reader
-from .utils.service import get_lock
-from .utils.service import GracefulKiller
-from .utils.config import config
+from timeseries_reader.reader import reader
+from timeseries_reader.utils.service import get_lock
+from timeseries_reader.utils.service import GracefulKiller
+from timeseries_reader.utils.config import config
 
 LOGFILE = config.get('logging', {}).get('logfile', '')
 LOGLEVEL = getattr(

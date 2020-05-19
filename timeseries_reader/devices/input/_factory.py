@@ -1,4 +1,4 @@
-from ._base import DeviceManager
+from timeseries_reader.devices.input._base import DeviceManager
 
 
 class DeviceManagerFactory:

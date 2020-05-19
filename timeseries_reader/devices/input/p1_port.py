@@ -3,8 +3,8 @@ import logging
 
 from serial import Serial
 
-from ._base import BaseDevice
-from ...utils.config import config
+from timeseries_reader.devices.input._base import BaseDevice
+from timeseries_reader.utils.config import config
 
 
 logger = logging.getLogger(__name__)

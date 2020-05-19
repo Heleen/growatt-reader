@@ -1,9 +1,9 @@
 import time
 import logging
 
-from .devices.input import input_devices
-from .devices.output import output_devices
-from .readings_store import ReadingsStore
+from timeseries_reader.devices.input import input_devices
+from timeseries_reader.devices.output import output_devices
+from timeseries_reader.readings_store import ReadingsStore
 
 logger = logging.getLogger(__name__)
 
