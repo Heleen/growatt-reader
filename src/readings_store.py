@@ -1,4 +1,4 @@
-class Readings:
+class ReadingsStore:
     """
     Class to hold readings in memory and periodically save them to file.
     """
