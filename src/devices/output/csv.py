@@ -3,10 +3,12 @@ import logging
 import time
 
 from ._base import BaseWriter
+from ...utils.config import config
 
 logger = logging.getLogger(__name__)
 
-OUTPUT_FILE = '/home/pi/growatt/results/readings.csv'
+OUTPUT_FILE = config.get('output', {}).get(
+    'csv', '/home/pi/growatt/results/readings.csv')
 
 
 class CSVWriter(BaseWriter):

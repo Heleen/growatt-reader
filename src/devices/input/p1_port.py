@@ -4,12 +4,13 @@ import logging
 from serial import Serial
 
 from ._base import BaseDevice
+from ...utils.config import config
 
 
 logger = logging.getLogger(__name__)
 
 
-SERIAL_SETTINGS = {
+DEFAULT_SERIAL_SETTINGS = {
     'baudrate': 115200,
     'timeout': 20,
     'port': "/dev/ttyUSB0",
@@ -18,7 +19,7 @@ SERIAL_SETTINGS = {
 
 class P1Port(BaseDevice):
     client = Serial
-    settings = SERIAL_SETTINGS
+    settings = config.get('input', {}).get('p1-port', DEFAULT_SERIAL_SETTINGS)
 
     @staticmethod
     def readline(p1_port_conn):

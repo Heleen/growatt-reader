@@ -15,13 +15,17 @@ from .utils.service import get_lock
 from .utils.service import GracefulKiller
 from .utils.config import config
 
+LOGFILE = config.get('logging', {}).get('logfile', '')
+LOGLEVEL = getattr(
+    logging,
+    config.get('logging', {}).get('level', '').upper()
+)
+
 try:
     logging.basicConfig(
         format='%(asctime)s %(levelname)s:%(message)s',
-        filename=config.get('logging', {}).get('logfile', ''),
-        level=getattr(
-            logging,
-            config.get('logging', {}).get('level', '').upper()))
+        filename=LOGFILE,
+        level=LOGLEVEL)
 except FileNotFoundError:
     logging.basicConfig()
 

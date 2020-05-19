@@ -8,11 +8,12 @@ from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.exceptions import ModbusIOException
 
 from ._base import BaseDevice
+from ...utils.config import config
 
 
 logger = logging.getLogger(__name__)
 
-MODBUS_SETTINGS = {
+DEFAULT_MODBUS_SETTINGS = {
     'method': 'rtu',
     'port': '/dev/ttyUSB0',
     'baudrate': 9600,
@@ -25,7 +26,8 @@ MODBUS_SETTINGS = {
 
 class Inverter(BaseDevice):
     client = ModbusSerialClient
-    settings = MODBUS_SETTINGS
+    settings = config.get('input', {}).get(
+        'growatt-inverter', DEFAULT_MODBUS_SETTINGS)
 
     @staticmethod
     def readline(inverter_conn):
