@@ -10,4 +10,4 @@ class ObjectFactory:
         creator = self._creators.get(key)
         if not creator:
             raise ValueError(key)
-        return creator
+        return creator()

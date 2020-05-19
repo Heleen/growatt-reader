@@ -3,9 +3,9 @@ class ReadingsStore:
     Class to hold readings in memory and periodically save them to file.
     """
 
-    def __init__(self, write_interval, Writer):
+    def __init__(self, write_interval, writer):
         self._write_interval = write_interval
-        self._Writer = Writer
+        self._Writer = writer
 
         self._readings = []
 

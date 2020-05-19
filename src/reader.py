@@ -19,8 +19,9 @@ def reader(
     is not broken.
     Write the results to the specified output device every Y seconds.
     """
-    OutputDevice = output_devices.get(output_device_name)
-    readings_store = ReadingsStore(write_interval, OutputDevice)
+    readings_store = ReadingsStore(
+        write_interval,
+        output_devices.get(output_device_name))
 
     with input_devices.get(input_device_name) as conn:
         while True:

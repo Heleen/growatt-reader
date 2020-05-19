@@ -6,7 +6,7 @@ device = output_devices.get('csv')
 device.write(readings)
 """
 
-from .._factory import ObjectFactory
+from ._factory import ObjectFactory
 from .csv import CSVWriter
 
 
