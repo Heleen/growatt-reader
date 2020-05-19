@@ -1,0 +1,25 @@
+[logging]
+    logfile = /var/log/timeseries_reader/reader.log
+    level = DEBUG
+
+[inputs]
+    [growatt-inverter]
+        port = /dev/ttyUSB0
+        baudrate = 9600
+        method = rtu
+        stopbits = 1
+        parity = N
+        bytesize = 8
+        timeout = 1
+
+    [p1-port]
+        port = /dev/ttyUSB0
+        baudrate = 115200
+        timeout = 1
+
+[outputs]
+    [csv]
+        file = /home/pi/growatt/results/readings.csv
+    [redis]
+        host = localhost
+        port = 6379

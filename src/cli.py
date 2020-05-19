@@ -13,18 +13,21 @@ import time
 from .reader import reader
 from .utils import get_lock
 from .utils import GracefulKiller
-
-LOG_FILENAME = '/var/log/timeseries_reader/reader.log'
+from .utils.config import config
 
 try:
     logging.basicConfig(
         format='%(asctime)s %(levelname)s:%(message)s',
-        filename=LOG_FILENAME,
-        level=logging.INFO)
+        filename=config.get('logging', {}).get('logfile', ''),
+        level=getattr(
+            logging,
+            config.get('logging', {}).get('level', '').upper()))
 except FileNotFoundError:
     logging.basicConfig()
 
-logging.info('Enter Reader Script')
+logger = logging.getLogger(__name__)
+
+logger.info('Enter Timeseries Reader Script')
 
 
 if __name__ == '__main__':
@@ -95,10 +98,10 @@ if __name__ == '__main__':
             args.write_interval)
         if killer.kill_now:
             break
-        logging.info(
+        logger.info(
             "Trying to reconnect to the %s in %i seconds.",
             args.device,
             args.reconnect_wait)
         time.sleep(args.reconnect_wait)
-        logging.info("Trying to reconnect to the %s...", args.device)
-    logging.warning("Killed by external source. Gracefully exited.")
+        logger.info("Trying to reconnect to the %s...", args.device)
+    logger.warning("Killed by external source. Gracefully exited.")
