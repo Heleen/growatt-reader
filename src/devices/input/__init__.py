@@ -2,16 +2,15 @@
 Usage:
 
 from devices.input import input_devices
-device = devices.get('growatt-inverter')
-with device.connect() as conn:
-    device.readline(conn)
+with input_devices.get('growatt-inverter') as conn:
+    conn.readline()
 """
 
-from .._factory import ObjectFactory
+from ._factory import DeviceManagerFactory
 from .growatt_inverter import Inverter
 from .p1_port import P1Port
 
 
-input_devices = ObjectFactory()
+input_devices = DeviceManagerFactory()
 input_devices.register('p1-port', P1Port)
 input_devices.register('growatt-inverter', Inverter)

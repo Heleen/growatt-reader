@@ -29,10 +29,9 @@ class Inverter(BaseDevice):
     settings = config.get('input', {}).get(
         'growatt-inverter', DEFAULT_MODBUS_SETTINGS)
 
-    @staticmethod
-    def readline(inverter_conn):
+    def readline(self):
         try:
-            reading = inverter_conn.read_input_registers(0, 45)
+            reading = self._conn.read_input_registers(0, 45)
             if isinstance(reading, Exception):
                 # Fix for PyModbus 'returning' the Exception rather than
                 # 'raising' it.

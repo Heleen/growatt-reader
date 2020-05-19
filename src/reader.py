@@ -19,11 +19,10 @@ def reader(
     is not broken.
     Write the results to the specified output device every Y seconds.
     """
-    InputDevice = input_devices.get(input_device_name)
     OutputDevice = output_devices.get(output_device_name)
     readings_store = ReadingsStore(write_interval, OutputDevice)
 
-    with InputDevice.connect() as device_conn:
+    with input_devices.get(input_device_name) as conn:
         while True:
             if killer.kill_now:
                 logger.warning(
@@ -33,7 +32,7 @@ def reader(
                 break
 
             try:
-                reading = InputDevice.readline(device_conn)
+                reading = conn.readline()
             except Exception as e:
                 # Write one last time in case connection is lost.
                 logger.error(e)

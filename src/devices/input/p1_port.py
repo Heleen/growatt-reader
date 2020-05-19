@@ -21,13 +21,12 @@ class P1Port(BaseDevice):
     client = Serial
     settings = config.get('input', {}).get('p1-port', DEFAULT_SERIAL_SETTINGS)
 
-    @staticmethod
-    def readline(p1_port_conn):
+    def readline(self):
         telegram = []
         checksum_line = False
         while not checksum_line:
             try:
-                telegram_line = p1_port_conn.readline()
+                telegram_line = self._conn.readline()
             except Exception as e:
                 logger.error("Could not read from P1 port, error: %s.", e)
                 raise e
