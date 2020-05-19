@@ -2,12 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Service to periodically read from a Growatt inverter connected on a serial port
-with the Modbus protocol and write the results to a CSV file.
-
-
-socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
-    "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
+Service to periodically read from a specified input device and write the
+results to a specified output device.
 """
 
 import argparse
@@ -18,23 +14,25 @@ from .reader import reader
 from .utils import get_lock
 from .utils import GracefulKiller
 
+LOG_FILENAME = '/var/log/timeseries_reader/reader.log'
 
 try:
     logging.basicConfig(
         format='%(asctime)s %(levelname)s:%(message)s',
-        filename='/var/log/growatt/growatt_reader.log',
+        filename=LOG_FILENAME,
         level=logging.INFO)
 except FileNotFoundError:
     logging.basicConfig()
-logging.info('Enter Growatt Reader Script')
+
+logging.info('Enter Reader Script')
 
 
 if __name__ == '__main__':
     """
-    Set up a connection with the inverter. When the connection is broken try
+    Set up a connection with an input device. When the connection is broken try
     to reconnect every X seconds.
-    While connection with inverter is live, periodically read from the inverter
-    and write the results to a CSV.
+    While connection with the device is live, periodically read from the device
+    and write the results to an output device.
     """
 
     parser = argparse.ArgumentParser(

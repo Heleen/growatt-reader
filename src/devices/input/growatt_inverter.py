@@ -1,3 +1,7 @@
+"""
+socat /dev/ttyUSB0,raw,echo=0 SYSTEM:'tee in.txt |socat - \
+    "PTY,link=/tmp/ttyUSB0,raw,echo=0,waitslave"|tee out.txt'
+"""
 import logging
 
 from pymodbus.client.sync import ModbusSerialClient
