@@ -3,7 +3,7 @@ import logging
 from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.exceptions import ModbusIOException
 
-from .base import BaseDevice
+from ._base import BaseDevice
 
 
 logger = logging.getLogger(__name__)

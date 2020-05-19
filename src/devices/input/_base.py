@@ -16,7 +16,7 @@ class BaseDevice:
 
     @contextmanager
     @classmethod
-    def connect_to_device(cls):
+    def connect(cls):
         """
         Set up a connection with the inverter.
         """
@@ -30,3 +30,4 @@ class BaseDevice:
                 "Did not manage to obtain a connection with the device.", e)
         finally:
             logging.warning("Lost connection with device.")
+

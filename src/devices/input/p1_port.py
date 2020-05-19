@@ -3,7 +3,7 @@ import logging
 
 from serial import Serial
 
-from .base import BaseDevice
+from ._base import BaseDevice
 
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,12 @@ class P1Port(BaseDevice):
     settings = SERIAL_SETTINGS
 
     @staticmethod
-    def readline(p1_port):
+    def readline(p1_port_conn):
         telegram = []
         checksum_line = False
         while not checksum_line:
             try:
-                telegram_line = p1_port.readline()
+                telegram_line = p1_port_conn.readline()
             except Exception as e:
                 logger.error("Could not read from P1 port, error: %s.", e)
                 raise e
