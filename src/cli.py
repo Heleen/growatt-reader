@@ -11,8 +11,8 @@ import logging
 import time
 
 from .reader import reader
-from .utils import get_lock
-from .utils import GracefulKiller
+from .utils.service import get_lock
+from .utils.service import GracefulKiller
 from .utils.config import config
 
 try:
