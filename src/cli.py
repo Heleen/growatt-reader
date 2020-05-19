@@ -39,15 +39,7 @@ if __name__ == '__main__':
     """
 
     parser = argparse.ArgumentParser(
-        description='Start the Serial Port Reader')
-    parser.add_argument(
-        '-p',
-        '--port',
-        type=str,
-        default='/dev/ttyUSB0',
-        dest='port',
-        help="The port on which the inverter is connected, default: "
-             "'/dev/ttyUSB0'.")
+        description='Start the Timeseries Reader')
     parser.add_argument(
         '-i',
         '--input',

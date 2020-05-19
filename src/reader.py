@@ -47,6 +47,6 @@ def reader(
                 reading.append(round(time.time()*1000.0))
                 # Add reading to readings store in memory
                 readings_store.add(reading)
-                # Read the inverter every READ_INTERVAL_SECS second
+                # Read the inverter every READ_INTERVAL_SECS seconds
                 time.sleep(read_interval)
     return None
